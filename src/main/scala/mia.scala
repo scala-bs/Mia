@@ -11,9 +11,6 @@ object Run extends App {
   
   gameLogic ! Start
   
-  //Thread.sleep(1000)
-  //system.shutdown()
-  
 }
 
 
@@ -97,26 +94,21 @@ class PlayerActor extends Actor {
   var dice = List[Dice]()
   
   def gamePhase: Receive = {
-    case Turn if dice.isEmpty || dice.length < 2 => {
+    case Turn if dice.isEmpty || dice.length < 2 =>
       sender() ! ThrowDice
-    }
-    case Turn => {
+    case Turn =>
       val after = dice.head
       val before = dice.tail.head
       if(before < after) sender() ! ThrowDice
       else sender() ! Lie
-    }
-    case Dice(die1, die2) => {
+    case Dice(die1, die2) =>
       sender() ! Number(die1*10+die2)
-    }
-    case Number(number) => {
+    case Number(number) =>
       val one = number / 10
       val two = number % 10
       dice = Dice(one, two) :: dice
-    }
-    case Lie => {
+    case Lie =>
       dice = List[Dice]()
-    }
   }
   
 }
