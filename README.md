@@ -12,8 +12,11 @@ The current implementation in mia.scala is just a first draft and has to be refi
 Open three shells and execute each of the following commands in its own shell:
 
 $ ./activator "run server"
+
 $ ./activator "run player"
+
 $ ./activator "run player1"
+
 $ ./activator "run player2"
 
 
