@@ -6,7 +6,7 @@ package object mia {
 
   case object JoinRequest
   case object Join
-  case object Joined
+  case class Joined(playerName: String)
 
 
   // messages for game phase
@@ -36,5 +36,6 @@ package object mia {
   }
   case class Number(number: Int)
   case object Lie
+  case class Looser(playerName: String)
   
 }

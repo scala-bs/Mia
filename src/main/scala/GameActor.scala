@@ -11,6 +11,8 @@ class GameActor(noOfPlayers: Int) extends Actor {
   
   val players = new Array[ActorRef](noOfPlayers)
   
+  val playerNames = new Array[String](noOfPlayers)
+  
   def receive = connectionPhase
   
   
@@ -24,10 +26,12 @@ class GameActor(noOfPlayers: Int) extends Actor {
       val ref = sender()
       joiningPlayers += ref
       ref ! Join
-    case Joined => // remove the player from joining and add them to players. if the player capacity is reached start the game.
+    case Joined(playerName) =>
+      // remove the player from joining and add them to players. if the player capacity is reached start the game.
       val ref = sender()
       joiningPlayers -= ref
       players(joinedPlayersCount) = ref
+      playerNames(joinedPlayersCount) = playerName
       joinedPlayersCount += 1
       self ! Start
     case Start if joiningPlayers.size == 0 && joinedPlayersCount == noOfPlayers =>
@@ -86,8 +90,10 @@ class GameActor(noOfPlayers: Int) extends Actor {
       dice = List[Dice]()
       permille(looser) -= 1
       
-      if(permille(looser) <= 0) context.system.shutdown()
-      else players(looser) ! Turn
+      if(permille(looser) <= 0) {
+        players foreach (_ ! Looser(playerNames(looser)))
+        context.system.shutdown()
+      } else players(looser) ! Turn
       
       println(permille.mkString("[", ",", "]"))
   }

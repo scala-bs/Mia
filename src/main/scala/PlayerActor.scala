@@ -1,10 +1,10 @@
 package de.scala_bs.mia
 
 
-import akka.actor.{ActorRef, Actor}
+import akka.actor.{ActorSelection, Actor}
 
 
-class PlayerActor(server: ActorRef) extends Actor {
+class PlayerActor(server: ActorSelection, name: String) extends Actor {
   
   server ! JoinRequest
   
@@ -19,7 +19,7 @@ class PlayerActor(server: ActorRef) extends Actor {
   def connectionPhase: Receive = {
     case Join =>
       context.become(gamePhase)
-      server ! Joined
+      server ! Joined(name)
     case m @ _ => println("p "+m)
   }
   
@@ -29,6 +29,8 @@ class PlayerActor(server: ActorRef) extends Actor {
   var dice = List[Dice]()
   
   def gamePhase: Receive = {
+    case Looser(_) =>
+      context.system.shutdown()
     case Turn if dice.isEmpty || dice.length < 2 =>
       sender() ! ThrowDice
     case Turn =>
