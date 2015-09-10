@@ -10,4 +10,4 @@ The current implementation in mia.scala is just a first draft and has to be refi
 ## Next steps
 
 On the long run, mia should run distributed.
-So a setup phase is needed as outlined in Mia2.scala.
+So the Run class will have to be adjusted to spawn remote actors.
