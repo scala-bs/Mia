@@ -7,3 +7,6 @@ src_managed/
 project/boot/
 .history
 .cache
+/bin/
+.classpath
+.project
