@@ -31,8 +31,6 @@ package object mia {
         case _ => 1                                         // ...and he has a smaller or equal number I win
       }
     }
-    
-    
   }
   case class Number(number: Int)
   case object Lie

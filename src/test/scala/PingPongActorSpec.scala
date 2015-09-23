@@ -32,5 +32,4 @@ class PingPongActorSpec(_system: ActorSystem) extends TestKit(_system) with Impl
       expectMsg(PongActor.PongMessage("pong"))
     }
   }*/
-
 }
