@@ -50,10 +50,14 @@ package object mia {
       Some(Dice(number/10, number%10))
     } else None
     
-    def compare(that: Number): Int = number compare that.number
+    def compare(that: Number): Int = (this.toDice, that.toDice) match {
+      case (Some(thisDice), Some(thatDice)) => thisDice compare thatDice
+      case _ => this.number compare that.number
+    }
   }
   
   case object Lie
+  case object InvalidPronouncement
   case class LooseTurn(playerName: String)
   case class Looser(playerName: String)
 }

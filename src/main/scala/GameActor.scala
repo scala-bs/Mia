@@ -60,26 +60,28 @@ class GameActor(noOfPlayers: Int) extends Actor {
       println(s"Player $currentPlayer says ${n.number}")
       players foreach (_ forward n)
       
-      // check if the number is valid to continue with the game
-      val validPronouncement = if(!diceRolls.isEmpty && !diceRolls.tail.isEmpty) {
-        val lastPlayersRoll = diceRolls.tail.head
-        
-        n.toDice match {
-          case Some(d) if d > lastPlayersRoll => true
-          case Some(d) if d <= lastPlayersRoll => false
-          case None => lastPlayersRoll.toNumber < n // if the player said a number that cannot be translated to a die, just compare, if it is bigger than the last number
-        }
-      } else true
+      currentPlayer = (currentPlayer + 1) % noOfPlayers
+      players(currentPlayer) ! Turn
       
-      if(!validPronouncement) {
-        roundEnds(currentPlayer)
-        checkGameEnd match {
-          case Some(gameLooserInd) => endGame(gameLooserInd)
-          case None => players(currentPlayer) ! Turn
-        }
+    case InvalidPronouncement if sender() == players(currentPlayer) =>
+      // check if the last pronouncement was really invalid to continue with the game
+      
+      val wasInvalid = pronouncements match {
+        case p1 :: p2 :: tail => p1 <= p2
+        case _ => false
+      }
+      
+      val looser = if(wasInvalid) {
+        (currentPlayer - 1 + noOfPlayers) % noOfPlayers
       } else {
-        currentPlayer = (currentPlayer + 1) % noOfPlayers
-        players(currentPlayer) ! Turn
+        currentPlayer
+      }
+      
+      roundEnds(looser)
+      currentPlayer = looser
+      checkGameEnd match {
+        case Some(gameLooserInd) => endGame(gameLooserInd)
+        case None => players(currentPlayer) ! Turn
       }
       
     case Lie if sender() == players(currentPlayer) => 
