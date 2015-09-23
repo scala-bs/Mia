@@ -17,7 +17,7 @@ class PingPongActorSpec(_system: ActorSystem) extends TestKit(_system) with Impl
     TestKit.shutdownActorSystem(system)
   }
  
-  "A Ping actor" must {
+  /*"A Ping actor" must {
     "send back a ping on a pong" in {
       val pingActor = system.actorOf(PingActor.props)
       pingActor ! PongActor.PongMessage("pong")
@@ -31,6 +31,6 @@ class PingPongActorSpec(_system: ActorSystem) extends TestKit(_system) with Impl
       pongActor ! PingActor.PingMessage("ping")
       expectMsg(PongActor.PongMessage("pong"))
     }
-  }
+  }*/
 
 }
