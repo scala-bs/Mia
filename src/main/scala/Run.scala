@@ -31,5 +31,4 @@ object Run extends App {
     system.actorOf(Props(classOf[PlayerActor], server, playerName), player)
     
   }
-  
 }

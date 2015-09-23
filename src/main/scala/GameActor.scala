@@ -10,11 +10,8 @@ class GameActor(noOfPlayers: Int) extends Actor {
   // Shared state
   
   val players = new Array[ActorRef](noOfPlayers)
-  
   val playerNames = new Array[String](noOfPlayers)
-  
   def receive = connectionPhase
-  
   
   // Connection state
   
@@ -50,7 +47,10 @@ class GameActor(noOfPlayers: Int) extends Actor {
   def gamePhase: Receive = {
     case Start =>
       players(currentPlayer) ! Turn
+      
     case ThrowDice if sender() == players(currentPlayer) =>
+      println(s"Player $currentPlayer rolls a die")
+      
       val d = Dice.random()
       diceRolls = d :: diceRolls
       sender() ! d
@@ -65,7 +65,8 @@ class GameActor(noOfPlayers: Int) extends Actor {
         val lastPlayersRoll = diceRolls.tail.head
         
         n.toDice match {
-          case Some(d: Dice) if d > lastPlayersRoll => true 
+          case Some(d) if d > lastPlayersRoll => true
+          case Some(d) if d <= lastPlayersRoll => false
           case None => lastPlayersRoll.toNumber < n // if the player said a number that cannot be translated to a die, just compare, if it is bigger than the last number
         }
       } else true
@@ -87,13 +88,13 @@ class GameActor(noOfPlayers: Int) extends Actor {
       
       // check, if last pronouncement was a lie
       val looser = diceRolls match {
-        case Nil => currentPlayer // if no dices were rolled, current player loses
+        case Nil => currentPlayer // if no dice were rolled, current player loses
         case lastRoll :: tail if lastRoll.toNumber == pronouncements.head => currentPlayer // if the last pronouncement matches with the last die, current player looses
         case _ => (currentPlayer - 1 + noOfPlayers) % noOfPlayers // else the previous player loses
       }
       
       currentPlayer = looser
-
+      
       roundEnds(looser)
       checkGameEnd match {
         case Some(gameLooserInd) => endGame(gameLooserInd)
