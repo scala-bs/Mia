@@ -40,62 +40,84 @@ class GameActor(noOfPlayers: Int) extends Actor {
     case m @ _ => println("c "+m)
   }
   
-  
   // Game state
   
-  lazy val permille = Array.fill(players.size)(10)
-  
+  lazy val permille = Array.fill(players.size)(0)
   var currentPlayer = 0
-  
-  def randomDice: Dice = {
-    def die: Int = scala.util.Random.nextInt(5) + 1
-    
-    val one = die
-    val two = die
-    
-    Dice(scala.math.max(one, two), scala.math.min(one, two))
-  }
-  
-  var dice = List[Dice]()
+  var diceRolls = List.empty[Dice]
+  var pronouncements = List.empty[Number]
   
   def gamePhase: Receive = {
     case Start =>
       players(currentPlayer) ! Turn
     case ThrowDice if sender() == players(currentPlayer) =>
-      val d = randomDice
-      dice = d :: dice
+      val d = Dice.random()
+      diceRolls = d :: diceRolls
       sender() ! d
-    case n: Number if sender() == players(currentPlayer) => print(" "+currentPlayer+"("+n.number+") ")
+      
+    case n: Number if sender() == players(currentPlayer) =>
+      pronouncements = n :: pronouncements
+      println(s"Player $currentPlayer says ${n.number}")
       players foreach (_ forward n)
-      currentPlayer = (currentPlayer + 1) % noOfPlayers
-      players(currentPlayer) ! Turn
-    case Lie if sender() == players(currentPlayer) => print(" "+currentPlayer+"(Lie) ")
+      
+      // check if the number is valid to continue with the game
+      val validPronouncement = if(!diceRolls.isEmpty && !diceRolls.tail.isEmpty) {
+        val lastPlayersRoll = diceRolls.tail.head
+        
+        n.toDice match {
+          case Some(d: Dice) if d > lastPlayersRoll => true 
+          case None => lastPlayersRoll.toNumber < n // if the player said a number that cannot be translated to a die, just compare, if it is bigger than the last number
+        }
+      } else true
+      
+      if(!validPronouncement) {
+        roundEnds(currentPlayer)
+        checkGameEnd match {
+          case Some(gameLooserInd) => endGame(gameLooserInd)
+          case None => players(currentPlayer) ! Turn
+        }
+      } else {
+        currentPlayer = (currentPlayer + 1) % noOfPlayers
+        players(currentPlayer) ! Turn
+      }
+      
+    case Lie if sender() == players(currentPlayer) => 
+      println(s"Player $currentPlayer says Lie!")
       players foreach (_ ! Lie)
       
-      val looser =
-        if(dice.isEmpty || dice.length < 2) {
-          currentPlayer
-        } else {
-          val after = dice.head
-          val before = dice.tail.head
-          if(before < after) {
-            currentPlayer
-          } else {
-            val previousPlayer = (currentPlayer - 1 + noOfPlayers) % noOfPlayers
-            previousPlayer
-          }
-        }
+      // check, if last pronouncement was a lie
+      val looser = diceRolls match {
+        case Nil => currentPlayer // if no dices were rolled, current player loses
+        case lastRoll :: tail if lastRoll.toNumber == pronouncements.head => currentPlayer // if the last pronouncement matches with the last die, current player looses
+        case _ => (currentPlayer - 1 + noOfPlayers) % noOfPlayers // else the previous player loses
+      }
       
       currentPlayer = looser
-      dice = List[Dice]()
-      permille(looser) -= 1
-      
-      if(permille(looser) <= 0) {
-        players foreach (_ ! Looser(playerNames(looser)))
-        context.system.shutdown()
-      } else players(looser) ! Turn
+
+      roundEnds(looser)
+      checkGameEnd match {
+        case Some(gameLooserInd) => endGame(gameLooserInd)
+        case None => players(looser) ! Turn 
+      }
       
       println(permille.mkString("[", ",", "]"))
   }
   
+  def roundEnds(looserIndex: Int) {
+    players foreach (_ ! LooseTurn(playerNames(looserIndex)))
+    
+    diceRolls = List.empty[Dice]
+    pronouncements = List.empty[Number]
+    permille(looserIndex) += 1
+  }
+  
+  def checkGameEnd = {
+    val looserIndex = permille.indexWhere(_ >= 10)
+    if(looserIndex == -1) None else Some(looserIndex)
+  }
+  
+  def endGame(gameLooserInd: Int) = {
+    players foreach (_ ! Looser(playerNames(gameLooserInd)))
+    context.system.shutdown()
+  }
 }
