@@ -47,7 +47,9 @@ package object mia {
   
   case class Number(number: Int) extends Ordered[Number] {
     def toDice = if(number >= 11 && number <= 66) {
-      Some(Dice(number/10, number%10))
+      val d1 = number/10
+      val d2 = number%10
+      if(d1 >= d2) Some(Dice(d1, d2)) else None
     } else None
     
     def compare(that: Number): Int = (this.toDice, that.toDice) match {
