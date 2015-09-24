@@ -67,9 +67,9 @@ class GameActor(noOfPlayers: Int) extends Actor {
       // check if the last pronouncement was really invalid to continue with the game
       
       val wasInvalid = pronouncements match {
-        case p1 :: tail if !p1.toDice.isDefined => false  // if the last announcement cannot be translated into dice, the announcement was invalid
+        case p1 :: tail if !p1.toDice.isDefined => true   // if the last announcement cannot be translated into dice, the announcement was invalid
         case p1 :: p2 :: tail => p1 <= p2                 // if the last announcement is smaller or equal than the announcement before, it is invalid
-        case _ => false
+        case _ => true
       }
       
       val looser = if(wasInvalid) {
