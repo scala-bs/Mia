@@ -37,7 +37,6 @@ class GameActor(noOfPlayers: Int) extends Actor {
     case Start if joiningPlayers.size == 0 && joinedPlayersCount == noOfPlayers =>
       context.become(gamePhase)
       self ! Start
-    case m @ _ => println("c "+m)
   }
   
   
@@ -57,22 +56,46 @@ class GameActor(noOfPlayers: Int) extends Actor {
   }
   
   var dice = List[Dice]()
+  var numbers = List[Dice]()
+  var hasThrownDice = false
   
   def gamePhase: Receive = {
     case Start =>
       players(currentPlayer) ! Turn
-    case ThrowDice if sender() == players(currentPlayer) =>
+    case ThrowDice if sender() == players(currentPlayer) && !hasThrownDice =>
+      hasThrownDice = true
       val d = randomDice
       dice = d :: dice
       sender() ! d
-    case n: Number if sender() == players(currentPlayer) => print(" "+currentPlayer+"("+n.number+") ")
+    case n @ Number(number) if sender() == players(currentPlayer) => print(" "+currentPlayer+"("+number+") ")
+      hasThrownDice = false
+      
+      val one = number / 10
+      val two = number % 10
+      numbers = Dice(one, two) :: numbers
+      
       players foreach (_ forward n)
       currentPlayer = (currentPlayer + 1) % noOfPlayers
       players(currentPlayer) ! Turn
+    case Lie if sender() == players(currentPlayer) => print(" "+currentPlayer+"(Lie) ")
+      players foreach (_ ! Lie)
+      
+      val looser = {
+        if(numbers.head == dice.head) {
+          currentPlayer
+        } else {
+          val previousPlayer = (currentPlayer - 1 + noOfPlayers) % noOfPlayers
+          previousPlayer
+        }
+      }
+      
+      reset(looser)
+      
+      nextTurn(looser)
     case YouLoose if sender() == players(currentPlayer) => print(" "+currentPlayer+"(YouLoose) ")
       players foreach (_ ! YouLoose)
       
-      val looser =
+      val looser = {
         if(dice.isEmpty || dice.length < 2) {
           currentPlayer
         } else {
@@ -85,17 +108,30 @@ class GameActor(noOfPlayers: Int) extends Actor {
             previousPlayer
           }
         }
+      }
       
-      currentPlayer = looser
-      dice = List[Dice]()
-      permille(looser) -= 1
+      reset(looser)
       
-      if(permille(looser) <= 0) {
-        players foreach (_ ! Looser(playerNames(looser)))
-        context.system.shutdown()
-      } else players(looser) ! Turn
-      
-      println(permille.mkString("[", ",", "]"))
+      nextTurn(looser)
+  }
+  
+  def reset(looser: Int): Unit = {
+    currentPlayer = looser
+    dice = List[Dice]()
+    numbers = List[Dice]()
+    hasThrownDice = false
+    permille(looser) -= 1
+  }
+  
+  def nextTurn(looser: Int): Unit = {
+    if(permille(looser) <= 0) {
+      players foreach (_ ! Looser(playerNames(looser)))
+      context.system.shutdown()
+    } else {
+      players(looser) ! Turn
+    }
+    
+    println(permille.mkString("[", ",", "]"))
   }
   
 }

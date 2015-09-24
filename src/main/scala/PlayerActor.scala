@@ -44,7 +44,7 @@ class PlayerActor(server: ActorSelection, name: String) extends Actor {
       val one = number / 10
       val two = number % 10
       dice = Dice(one, two) :: dice
-    case YouLoose =>
+    case YouLoose | Lie =>
       dice = List[Dice]()
   }
   
