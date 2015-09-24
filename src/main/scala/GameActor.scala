@@ -47,7 +47,7 @@ class GameActor(noOfPlayers: Int) extends Actor {
   var currentPlayer = 0
   
   def randomDice: Dice = {
-    def die: Int = scala.util.Random.nextInt(5) + 1
+    def die: Int = scala.util.Random.nextInt(6) + 1
     
     val one = die
     val two = die
@@ -65,7 +65,8 @@ class GameActor(noOfPlayers: Int) extends Actor {
       val d = randomDice
       dice = d :: dice
       sender() ! d
-    case n @ Number(number) if sender() == players(currentPlayer) => print(" "+currentPlayer+"("+number+") ")
+    case n @ Number(number) if sender() == players(currentPlayer) =>
+      print(f" ${playerNames(currentPlayer)}%10s($number) ")
       
       val one = number / 10
       val two = number % 10
@@ -74,7 +75,9 @@ class GameActor(noOfPlayers: Int) extends Actor {
       players foreach (_ forward n)
       currentPlayer = (currentPlayer + 1) % noOfPlayers
       players(currentPlayer) ! Turn
-    case Lie if sender() == players(currentPlayer) => print(" "+currentPlayer+"(Lie) ")
+    case Lie if sender() == players(currentPlayer) =>
+      print(f" ${playerNames(currentPlayer)}%10s(Lie) ")
+      
       players foreach (_ ! Lie)
       
       val looser = {
@@ -89,7 +92,9 @@ class GameActor(noOfPlayers: Int) extends Actor {
       reset(looser)
       
       nextTurn(looser)
-    case YouLoose if sender() == players(currentPlayer) => print(" "+currentPlayer+"(YouLoose) ")
+    case YouLoose if sender() == players(currentPlayer) =>
+      print(f" ${playerNames(currentPlayer)}%10s(YouLoose) ")
+      
       players foreach (_ ! YouLoose)
       
       val looser = {
