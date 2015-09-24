@@ -7,8 +7,28 @@ import com.typesafe.config.ConfigFactory
 
 object Run extends App {
   
-  if(args.size != 1 || !Set("player", "player1", "player2", "server").contains(args(0))) {
-    println("Please provide a run mode: either 'player', 'player1', 'player2', or 'server'.")
+  if(args.size != 1 || !Set("player", "player1", "player2", "server", "local").contains(args(0))) {
+    println("Please provide a run mode: either 'player', 'player1', 'player2', 'server', or 'local'.")
+  } else if(args(0) == "local") {
+    
+    val system = ActorSystem("Mia")
+    system.actorOf(Props(classOf[GameActor], 3), "server")
+    
+    val serverSelection = system.actorSelection("akka://Mia/user/server")
+    system.actorOf(Props(classOf[PlayerActor], serverSelection, "player1"), "player1")
+    
+    Thread.sleep(500)
+    
+    system.actorOf(Props(classOf[PlayerActor], serverSelection, "player2"), "player2")
+    
+    Thread.sleep(500)
+    
+    system.actorOf(Props(classOf[PlayerActor], serverSelection, "player3"), "player3")
+    
+    Thread.sleep(2000)
+    
+    system.shutdown()
+    
   } else if(args(0) == "server") {
     
     val config = ConfigFactory.load("server")

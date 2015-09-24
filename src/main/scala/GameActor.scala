@@ -57,18 +57,15 @@ class GameActor(noOfPlayers: Int) extends Actor {
   
   var dice = List[Dice]()
   var numbers = List[Dice]()
-  var hasThrownDice = false
   
   def gamePhase: Receive = {
     case Start =>
       players(currentPlayer) ! Turn
-    case ThrowDice if sender() == players(currentPlayer) && !hasThrownDice =>
-      hasThrownDice = true
+    case ThrowDice if sender() == players(currentPlayer) =>
       val d = randomDice
       dice = d :: dice
       sender() ! d
     case n @ Number(number) if sender() == players(currentPlayer) => print(" "+currentPlayer+"("+number+") ")
-      hasThrownDice = false
       
       val one = number / 10
       val two = number % 10
@@ -119,7 +116,6 @@ class GameActor(noOfPlayers: Int) extends Actor {
     currentPlayer = looser
     dice = List[Dice]()
     numbers = List[Dice]()
-    hasThrownDice = false
     permille(looser) -= 1
   }
   
