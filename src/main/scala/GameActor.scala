@@ -69,8 +69,8 @@ class GameActor(noOfPlayers: Int) extends Actor {
       players foreach (_ forward n)
       currentPlayer = (currentPlayer + 1) % noOfPlayers
       players(currentPlayer) ! Turn
-    case Lie if sender() == players(currentPlayer) => print(" "+currentPlayer+"(Lie) ")
-      players foreach (_ ! Lie)
+    case YouLoose if sender() == players(currentPlayer) => print(" "+currentPlayer+"(YouLoose) ")
+      players foreach (_ ! YouLoose)
       
       val looser =
         if(dice.isEmpty || dice.length < 2) {

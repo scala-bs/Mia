@@ -37,14 +37,14 @@ class PlayerActor(server: ActorSelection, name: String) extends Actor {
       val after = dice.head
       val before = dice.tail.head
       if(before < after) sender() ! ThrowDice
-      else sender() ! Lie
+      else sender() ! YouLoose
     case Dice(die1, die2) =>
       sender() ! Number(die1*10+die2)
     case Number(number) =>
       val one = number / 10
       val two = number % 10
       dice = Dice(one, two) :: dice
-    case Lie =>
+    case YouLoose =>
       dice = List[Dice]()
   }
   

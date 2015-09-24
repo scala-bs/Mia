@@ -33,7 +33,7 @@ package object mia {
     }
   }
   case class Number(number: Int)
-  case object Lie
+  case object YouLoose
   case class Looser(playerName: String)
   
 }

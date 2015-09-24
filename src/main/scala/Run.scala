@@ -8,7 +8,7 @@ import com.typesafe.config.ConfigFactory
 object Run extends App {
   
   if(args.size != 1 || !Set("player", "player1", "player2", "server").contains(args(0))) {
-    println("Please provide a run mode: either 'player' or 'server'.")
+    println("Please provide a run mode: either 'player', 'player1', 'player2', or 'server'.")
   } else if(args(0) == "server") {
     
     val config = ConfigFactory.load("server")
